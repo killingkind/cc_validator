@@ -2,13 +2,8 @@
 
 # To-do list
 #
-# validateCard() - check for valid input (not empty string after stripping)
-# status tooltips for stuff
-# color resultLabel
-# tooltip on ccImgLabel
+# validateCard() - check for valid input (not empty string after stripping) - use setValidator()
 # about screen
-# make it possible to tab out of ccText
-# make validateBtn default (enter triggers it)
 # optimize validateCard and setIssuerImg - less cycles
 #
 # possibly in future - remove validateBtn and make resultLabel update on text update in ccText
@@ -23,22 +18,30 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         self.pixmaps = {
-                    'American Express': 'american_express.png',
-                    'Diners Club': 'diners_club.png',
-                    'Discover': 'discover.png',
-                    'JCB': 'jcb.png',
-                    'Dankort': 'Dankort.png',
-                    'MasterCard': 'Master_Card.png',
-                    'Maestro': 'Maestro.png',
-                    'Visa': 'Visa.png'
-                    }
+            'American Express': 'american_express.png',
+            'Diners Club': 'diners_club.png',
+            'Discover': 'discover.png',
+            'JCB': 'jcb.png',
+            'Dankort': 'Dankort.png',
+            'MasterCard': 'Master_Card.png',
+            'Maestro': 'Maestro.png',
+            'Visa': 'Visa.png'
+        }
+
+        self.redPalette = QtGui.QPalette()
+        self.redPalette.setColor(QtGui.QPalette.Foreground,QtCore.Qt.red)
+
+        self.greenPalette = QtGui.QPalette()
+        self.greenPalette.setColor(QtGui.QPalette.Foreground,QtCore.Qt.darkGreen)
+
+        self.validarorRegexp = QtCore.QRegExp("\d{4}(?-|? )\d{4}(?-|? )\d{4}(?-|? )\d{4}(?-|? )")
 
         self.setupUi(self)
 
     def setupUi(self, MainWindow):
 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setFixedSize(560, 235)
+        MainWindow.setFixedSize(560, 215)
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -112,6 +115,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.validateBtn = QtWidgets.QPushButton(self.centralwidget)
         self.validateBtn.setObjectName("validateBtn")
         self.validateBtn.clicked.connect(self.validateCard)
+        self.validateBtn.setAutoDefault(True)
+        self.validateBtn.setDefault(True)
 
         self.verticalLayout.addWidget(self.validateBtn)
 
@@ -131,15 +136,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         MainWindow.setMenuBar(self.menubar)
 
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-
-        MainWindow.setStatusBar(self.statusbar)
-
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
         self.actionExit.triggered.connect(QtWidgets.qApp.quit)
-
 
         # Needs an action connected to it
         self.actionAbout = QtWidgets.QAction(MainWindow)
@@ -175,15 +174,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def validateCard(self):
 
         issuers = {
-                    'American Express': '^3[47]\d{13}$',
-                    'Diners Club': '^(30[0-5]\d|309\d|36\d\d|3[89]\d\d)\d{10}',
-                    'Discover': '^6(?:011\d\d|5\d{4}|4[4-9]\d{3}|22(?:1(?:2[6-9]|[3-9]\d)|[2-8]\d\d|9(?:[01]\d|2[0-5])))\d{10}$',
-                    'JCB': '^35(?:2[89]|[3-8]\d)\d{12}$',
-                    'Dankort': '^5019\d{12}',
-                    'MasterCard': '^5[1-5]\d{14}$',
-                    'Maestro': '^(?:5[06789]\d\d|6304|6390|67\d\d)\d{8,15}$',
-                    'Visa': '^4\d{15}$'
-                    }
+            'American Express': '^3[47]\d{13}$',
+            'Diners Club': '^(30[0-5]\d|309\d|36\d\d|3[89]\d\d)\d{10}',
+            'Discover': '^6(?:011\d\d|5\d{4}|4[4-9]\d{3}|22(?:1(?:2[6-9]|[3-9]\d)|[2-8]\d\d|9(?:[01]\d|2[0-5])))\d{10}$',
+            'JCB': '^35(?:2[89]|[3-8]\d)\d{12}$',
+            'Dankort': '^5019\d{12}',
+            'MasterCard': '^5[1-5]\d{14}$',
+            'Maestro': '^(?:5[06789]\d\d|6304|6390|67\d\d)\d{8,15}$',
+            'Visa': '^4\d{15}$'
+        }
 
         cc_number = self.ccText.text()
 
@@ -197,74 +196,79 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         for issuer in issuers:
 
-        	exp = issuers[issuer]
-        	#compiled = re.compile(exp)
+            exp = issuers[issuer]
 
-        	if re.match(exp, stripped):
+            if re.match(exp, stripped):
 
-        		print(issuer)
+                for char in reverse:
 
-        		for char in reverse:
+                    digit = int(char)
 
-        			digit = int(char)
+                    if i % 2 == 0:
 
-        			if i % 2 == 0:
+                        digit *= 2
+                        temp_lst = [int(d) for d in str(digit)]
 
-        				digit *= 2
-        				temp_lst = [int(d) for d in str(digit)]
+                        for d in temp_lst:
 
-        				for d in temp_lst:
+                            total += d
 
-        					total += d
+                    else:
 
-        			else:
+                        total += digit
 
-        				total += digit
+                    i += 1
 
-        			i += 1
+                if total % 10 == 0:
 
-        		if total % 10 == 0:
+                    valid = True
+                    self.resultLabel.setText('Card is valid')
+                    self.resultLabel.setPalette(self.greenPalette)
+                    break
 
-        			valid = True
-        			self.resultLabel.setText('Card is valid')
-        			break
+                else:
 
-        		else:
-
-        			self.resultLabel.setText('Invalid card number')
-        			break
+                    self.resultLabel.setText('Invalid card number')
+                    self.resultLabel.setPalette(self.redPalette)
+                    break
 
         if not valid:
             self.resultLabel.setText('Invalid card')
+            self.resultLabel.setPalette(self.redPalette)
 
     def setIssuerImg(self):
 
         issuers = {
-                    'American Express': '^3[47]\d\d',
-                    'Diners Club': '^30[0-5]\d|309\d|36\d\d|3[89]\d\d',
-                    'Discover': '^6(?:011\d\d|5\d{4}|4[4-9]\d{3}|22(?:1(?:2[6-9]|[3-9]\d)|[2-8]\d\d|9(?:[01]\d|2[0-5])))',
-                    'JCB': '^35(?:2[89]|[3-8]\d)',
-                    'Dankort': '^5019',
-                    'MasterCard': '^5[1-5]\d\d',
-                    'Maestro': '^(?:5[06789]\d\d|6304|6390|67\d\d)',
-                    'Visa': '^4\d\d\d'
-                    }
+            'American Express': '^3[47]\d\d',
+            'Diners Club': '^30[0-5]\d|309\d|36\d\d|3[89]\d\d',
+            'Discover': '^6(?:011\d\d|5\d{4}|4[4-9]\d{3}|22(?:1(?:2[6-9]|[3-9]\d)|[2-8]\d\d|9(?:[01]\d|2[0-5])))',
+            'JCB': '^35(?:2[89]|[3-8]\d)',
+            'Dankort': '^5019',
+            'MasterCard': '^5[1-5]\d\d',
+            'Maestro': '^(?:5[06789]\d\d|6304|6390|67\d\d)',
+            'Visa': '^4\d\d\d'
+        }
 
         current_text = self.ccText.text()
 
         if len(current_text) < 4:
 
             self.ccImgLabel.setPixmap(QtGui.QPixmap('blank.png'))
+            self.ccImgLabel.setToolTip('')
 
-        for issuer in issuers:
+        else:
 
-            exp = issuers[issuer]
+            for issuer in issuers:
 
-            if re.match(exp, current_text):
+                exp = issuers[issuer]
 
-                pixmap = QtGui.QPixmap(self.pixmaps[issuer])
-                self.ccImgLabel.setPixmap(pixmap)
-                break
+                if re.match(exp, current_text):
+
+                    pixmap = QtGui.QPixmap(self.pixmaps[issuer])
+                    self.ccImgLabel.setPixmap(pixmap)
+                    self.ccImgLabel.setToolTip(issuer)
+                    break
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

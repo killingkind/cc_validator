@@ -1,3 +1,6 @@
+# PyCharm files
+.idea/
+
 # Qt .ui files
 *.ui
 
