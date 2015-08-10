@@ -2,9 +2,8 @@
 
 # To-do list
 #
-# validateCard() - check for valid input (not empty string after stripping) - use setValidator()
-# about screen
 # optimize validateCard and setIssuerImg - less cycles
+# automatically add spaces at the end of each 4-digit group. modify validator accordingly
 #
 # possibly in future - remove validateBtn and make resultLabel update on text update in ccText
 
@@ -12,7 +11,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 import re
 
-class Ui_MainWindow(QtWidgets.QMainWindow):
+
+class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -29,42 +29,35 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         }
 
         self.redPalette = QtGui.QPalette()
-        self.redPalette.setColor(QtGui.QPalette.Foreground,QtCore.Qt.red)
+        self.redPalette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
 
         self.greenPalette = QtGui.QPalette()
-        self.greenPalette.setColor(QtGui.QPalette.Foreground,QtCore.Qt.darkGreen)
+        self.greenPalette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.darkGreen)
 
-        self.validarorRegexp = QtCore.QRegExp("\d{4}(?-|? )\d{4}(?-|? )\d{4}(?-|? )\d{4}(?-|? )")
+        self.aboutWindow = AboutWindow()
 
-        self.setupUi(self)
+        self.setup_ui(self)
 
-    def setupUi(self, MainWindow):
+    def setup_ui(self, MainWindow):
 
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.setFixedSize(560, 215)
+        MainWindow.setFixedSize(560, 225)
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
 
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
 
         self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
 
         self.ccTextLabel = QtWidgets.QLabel(self.centralwidget)
-        self.ccTextLabel.setObjectName("ccTextLabel")
 
         self.verticalLayout.addWidget(self.ccTextLabel)
 
         self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
 
         self.ccImgLabel = QtWidgets.QLabel(self.centralwidget)
         self.ccImgLabel.setMinimumSize(QtCore.QSize(64, 64))
         self.ccImgLabel.setMaximumSize(QtCore.QSize(64, 64))
         self.ccImgLabel.setText("")
-        self.ccImgLabel.setObjectName("ccImgLabel")
 
         self.horizontalLayout.addWidget(self.ccImgLabel)
 
@@ -76,18 +69,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         sizePolicy.setHeightForWidth(self.ccText.sizePolicy().hasHeightForWidth())
 
         self.ccText.setSizePolicy(sizePolicy)
-        self.ccText.setMaximumSize(QtCore.QSize(16777215, 32))
-        self.ccText.setObjectName("ccText")
-        self.ccText.textChanged.connect(self.setIssuerImg)
+        self.ccText.setMaximumSize(QtCore.QSize(16777215, 28))
+
+        self.validator = QtGui.QRegExpValidator(QtCore.QRegExp("(?:[0-9]{4}(?:-?| ?)){3}[0-9]{4}$"), self.ccText)
+        self.ccText.setValidator(self.validator)
+
+        self.ccText.textChanged.connect(self.set_issuer_img)
 
         self.horizontalLayout.addWidget(self.ccText)
-
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.line = QtWidgets.QFrame(self.centralwidget)
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
 
         self.verticalLayout.addWidget(self.line)
 
@@ -101,58 +95,51 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.resultLabel.setFont(font)
         self.resultLabel.setText("")
         self.resultLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.resultLabel.setObjectName("resultLabel")
 
         self.verticalLayout.addWidget(self.resultLabel)
 
         self.line_2 = QtWidgets.QFrame(self.centralwidget)
         self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line_2.setObjectName("line_2")
 
         self.verticalLayout.addWidget(self.line_2)
 
         self.validateBtn = QtWidgets.QPushButton(self.centralwidget)
-        self.validateBtn.setObjectName("validateBtn")
-        self.validateBtn.clicked.connect(self.validateCard)
+        self.validateBtn.clicked.connect(self.validate_card)
         self.validateBtn.setAutoDefault(True)
         self.validateBtn.setDefault(True)
 
         self.verticalLayout.addWidget(self.validateBtn)
-
         self.verticalLayout_2.addLayout(self.verticalLayout)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 560, 23))
-        self.menubar.setObjectName("menubar")
 
         self.menuFile = QtWidgets.QMenu(self.menubar)
-        self.menuFile.setObjectName("menuFile")
 
         self.menuAbout = QtWidgets.QMenu(self.menubar)
-        self.menuAbout.setObjectName("menuAbout")
 
         MainWindow.setMenuBar(self.menubar)
 
-        self.actionExit = QtWidgets.QAction(MainWindow)
-        self.actionExit.setObjectName("actionExit")
+        self.actionExit = QtWidgets.QAction(QtGui.QIcon('exit.png'), '&Exit', MainWindow)
         self.actionExit.triggered.connect(QtWidgets.qApp.quit)
 
-        # Needs an action connected to it
-        self.actionAbout = QtWidgets.QAction(MainWindow)
-        self.actionAbout.setObjectName("actionAbout")
+        self.actionAbout = QtWidgets.QAction(QtGui.QIcon('gnome-info.png'), '&About', MainWindow)
+        self.actionAbout.triggered.connect(self.aboutWindow.show)
 
         self.menuFile.addAction(self.actionExit)
         self.menuAbout.addAction(self.actionAbout)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
 
-        self.retranslateUi(MainWindow)
+        self.setWindowIcon(QtGui.QIcon('cc_icon.png'))
+
+        self.retranslate_ui(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def retranslateUi(self, MainWindow):
+    def retranslate_ui(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Validator"))
 
@@ -170,8 +157,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.actionAbout.setText(_translate("MainWindow", "About"))
         self.actionAbout.setStatusTip(_translate("MainWindow", "About application"))
 
-    # Need to check for valid input
-    def validateCard(self):
+    def validate_card(self):
 
         issuers = {
             'American Express': '^3[47]\d{13}$',
@@ -236,7 +222,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.resultLabel.setText('Invalid card')
             self.resultLabel.setPalette(self.redPalette)
 
-    def setIssuerImg(self):
+    def set_issuer_img(self):
 
         issuers = {
             'American Express': '^3[47]\d\d',
@@ -270,8 +256,44 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     break
 
 
+class AboutWindow(QtWidgets.QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        self.pixmap = QtGui.QPixmap('logo.png')
+
+        self.image_label = QtWidgets.QLabel()
+        self.image_label.setPixmap(self.pixmap)
+        self.image_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.about_label_1 = QtWidgets.QLabel('Credit card validator application')
+        self.about_label_1.setAlignment(QtCore.Qt.AlignCenter)
+        self.about_label_1.setWordWrap(True)
+
+        self.about_label_2 = QtWidgets.QLabel('Created by Dannyo')
+        self.about_label_2.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.close_button = QtWidgets.QPushButton('Close')
+        self.close_button.pressed.connect(self.close)
+
+        vbox = QtWidgets.QVBoxLayout()
+        vbox.addStretch(1)
+
+        vbox.addWidget(self.image_label)
+        vbox.addWidget(self.about_label_1)
+        vbox.addWidget(self.about_label_2)
+        vbox.addWidget(self.close_button)
+
+        self.setWindowTitle('About')
+        self.setFixedSize(200, 200)
+        self.setWindowIcon(QtGui.QIcon('cc_icon.png'))
+
+        self.setLayout(vbox)
+
+
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    win = Ui_MainWindow()
+    win = MainWindow()
     win.show()
     sys.exit(app.exec_())
