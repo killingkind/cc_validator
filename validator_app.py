@@ -71,8 +71,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ccText.setSizePolicy(sizePolicy)
         self.ccText.setMaximumSize(QtCore.QSize(16777215, 28))
 
-        self.validator = QtGui.QRegExpValidator(QtCore.QRegExp("(?:[0-9]{4}(?:-?| ?)){3}[0-9]{4}$"), self.ccText)
-        self.ccText.setValidator(self.validator)
+        self.mask = '9999 9999 9999 9999'
+        self.ccText.setInputMask(self.mask)
 
         self.ccText.textChanged.connect(self.set_issuer_img)
 
